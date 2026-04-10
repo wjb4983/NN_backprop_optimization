@@ -22,12 +22,15 @@ def run_benchmark(config: BenchmarkConfig) -> list[dict]:
                 optimizer=optimizer_name,
                 learning_rate=lr,
                 output_dir=str(run_dir),
+                controller=config.controller,
             )
             summary = run_training(train_cfg)
             record = {
                 "optimizer": optimizer_name,
                 "lr": lr,
                 "final_loss": summary["final_loss"],
+                "controller_enabled": summary["controller_enabled"],
+                "interventions": summary["interventions"],
                 "run_dir": str(run_dir),
             }
             records.append(record)
@@ -37,6 +40,7 @@ def run_benchmark(config: BenchmarkConfig) -> list[dict]:
     with leaderboard.open("w", encoding="utf-8") as f:
         for row in records:
             f.write(
-                f"{row['optimizer']}\tlr={row['lr']}\tfinal_loss={row['final_loss']:.6f}\n"
+                f"{row['optimizer']}\tlr={row['lr']}\tfinal_loss={row['final_loss']:.6f}"
+                f"\tcontroller={row['controller_enabled']}\tinterventions={row['interventions']}\n"
             )
     return records
