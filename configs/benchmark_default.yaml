@@ -1,0 +1,11 @@
+seed: 7
+steps: 40
+batch_size: 32
+optimizers:
+  - sgd
+  - momentum
+  - adam
+learning_rates:
+  - 0.01
+  - 0.03
+output_dir: runs/benchmark_default
