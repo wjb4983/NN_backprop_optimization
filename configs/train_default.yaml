@@ -1,6 +1,11 @@
 seed: 7
 steps: 50
 batch_size: 32
-optimizer: adam
+optimizer: adamw
 learning_rate: 0.03
 output_dir: runs/train_default
+controller:
+  enabled: false
+  cadence: 4
+  rolling_window: 12
+  clip_threshold: 1.0

@@ -5,7 +5,10 @@ optimizers:
   - sgd
   - momentum
   - adam
+  - adamw
 learning_rates:
   - 0.01
   - 0.03
 output_dir: runs/benchmark_default
+controller:
+  enabled: false

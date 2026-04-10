@@ -2,41 +2,71 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from nn_opt_rd.config.schema import BenchmarkConfig, TrainConfig
+from nn_opt_rd.config.schema import (
+    BenchmarkConfig,
+    ControllerAdjustments,
+    ControllerBounds,
+    ControllerConfig,
+    ControllerSafety,
+    ControllerThresholds,
+    TrainConfig,
+)
+
+
+def _cast_scalar(value: str):
+    v = value.strip()
+    if v.lower() in {"true", "false"}:
+        return v.lower() == "true"
+    try:
+        return float(v) if "." in v else int(v)
+    except ValueError:
+        return v
 
 
 def _fallback_parse_yaml(text: str) -> dict:
-    data: dict = {}
-    current_list_key: str | None = None
-    for raw in text.splitlines():
-        line = raw.split("#", 1)[0].rstrip()
+    lines = text.splitlines()
+    root: dict = {}
+    stack: list[tuple[int, dict | list]] = [(-1, root)]
+
+    for idx, raw in enumerate(lines):
+        line = raw.split("#", 1)[0].rstrip("\n")
         if not line.strip():
             continue
-        if line.lstrip().startswith("- ") and current_list_key:
-            item = line.strip()[2:].strip()
-            try:
-                cast_item = float(item) if "." in item else int(item)
-            except ValueError:
-                cast_item = item
-            data[current_list_key].append(cast_item)
+        indent = len(line) - len(line.lstrip(" "))
+        token = line.strip()
+
+        while len(stack) > 1 and indent <= stack[-1][0]:
+            stack.pop()
+        parent = stack[-1][1]
+
+        if token.startswith("- "):
+            item = _cast_scalar(token[2:])
+            if not isinstance(parent, list):
+                raise ValueError(f"Invalid list item placement: {raw}")
+            parent.append(item)
             continue
 
-        current_list_key = None
-        if ":" not in line:
+        if ":" not in token:
             raise ValueError(f"Unsupported config line: {raw}")
-        key, value = [x.strip() for x in line.split(":", 1)]
+        key, value = [x.strip() for x in token.split(":", 1)]
+
         if value == "":
-            data[key] = []
-            current_list_key = key
-            continue
-        if value.lower() in {"true", "false"}:
-            data[key] = value.lower() == "true"
+            next_non_empty = ""
+            for candidate in lines[idx + 1 :]:
+                nxt = candidate.split("#", 1)[0].strip()
+                if nxt:
+                    next_non_empty = nxt
+                    break
+            container: dict | list = [] if next_non_empty.startswith("- ") else {}
+            if not isinstance(parent, dict):
+                raise ValueError(f"Mapping key inside non-dict parent: {raw}")
+            parent[key] = container
+            stack.append((indent, container))
         else:
-            try:
-                data[key] = float(value) if "." in value else int(value)
-            except ValueError:
-                data[key] = value
-    return data
+            if not isinstance(parent, dict):
+                raise ValueError(f"Scalar key inside non-dict parent: {raw}")
+            parent[key] = _cast_scalar(value)
+    return root
 
 
 def _load_yaml(path: str) -> dict:
@@ -53,11 +83,35 @@ def _load_yaml(path: str) -> dict:
     return data
 
 
+def _parse_controller_config(data: dict | None) -> ControllerConfig:
+    if not data:
+        return ControllerConfig()
+    thresholds = ControllerThresholds(**data.get("thresholds", {}))
+    bounds = ControllerBounds(**data.get("bounds", {}))
+    adjustments = ControllerAdjustments(**data.get("adjustments", {}))
+    safety = ControllerSafety(**data.get("safety", {}))
+
+    top_level = {
+        k: v
+        for k, v in data.items()
+        if k not in {"thresholds", "bounds", "adjustments", "safety"}
+    }
+    return ControllerConfig(
+        **top_level,
+        thresholds=thresholds,
+        bounds=bounds,
+        adjustments=adjustments,
+        safety=safety,
+    )
+
+
 def load_train_config(path: str) -> TrainConfig:
     data = _load_yaml(path)
-    return TrainConfig(**data)
+    controller = _parse_controller_config(data.pop("controller", None))
+    return TrainConfig(**data, controller=controller)
 
 
 def load_benchmark_config(path: str) -> BenchmarkConfig:
     data = _load_yaml(path)
-    return BenchmarkConfig(**data)
+    controller = _parse_controller_config(data.pop("controller", None))
+    return BenchmarkConfig(**data, controller=controller)
