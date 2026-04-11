@@ -1,0 +1,46 @@
+suite_name: starter_narrow
+output_dir: runs/experiments/starter_narrow
+seeds:
+  - 1
+  - 2
+defaults:
+  steps: 40
+  batch_size: 32
+stages:
+  - name: narrow_starter
+    description: Fast starter benchmark for regression checks.
+    runs:
+      - name: adamw_baseline
+        optimizer: adamw
+        learning_rate: 0.03
+        controller_enabled: false
+      - name: adamw_controller
+        optimizer: adamw
+        learning_rate: 0.03
+        controller_enabled: true
+ablations:
+  - name: feature_group
+    variants:
+      - name: short_window
+        controller_overrides:
+          rolling_window: 6
+      - name: long_window
+        controller_overrides:
+          rolling_window: 20
+  - name: action_channel
+    variants:
+      - name: trust_enabled
+        controller_overrides:
+          enable_trust_tweaks: true
+      - name: momentum_enabled
+        controller_overrides:
+          enable_momentum_tweaks: true
+  - name: bounds_cadence
+    variants:
+      - name: fast_cadence
+        controller_overrides:
+          cadence: 2
+      - name: conservative_bounds
+        controller_overrides:
+          bounds.min_lr_multiplier: 0.5
+          bounds.max_lr_multiplier: 1.5

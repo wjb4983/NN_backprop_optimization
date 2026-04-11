@@ -1,0 +1,29 @@
+suite_name: medium
+output_dir: runs/experiments/medium
+seeds:
+  - 1
+  - 2
+  - 3
+defaults:
+  steps: 80
+  batch_size: 32
+stages:
+  - name: medium
+    description: Broader optimizer + controller comparison.
+    runs:
+      - name: adamw_baseline
+        optimizer: adamw
+        learning_rate: 0.03
+        controller_enabled: false
+      - name: adamw_controller
+        optimizer: adamw
+        learning_rate: 0.03
+        controller_enabled: true
+      - name: adam_baseline
+        optimizer: adam
+        learning_rate: 0.03
+        controller_enabled: false
+      - name: momentum_baseline
+        optimizer: momentum
+        learning_rate: 0.01
+        controller_enabled: false

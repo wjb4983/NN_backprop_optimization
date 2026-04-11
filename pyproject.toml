@@ -19,6 +19,7 @@ dev = [
 [project.scripts]
 nn-opt-train = "nn_opt_rd.cli.train:main"
 nn-opt-benchmark = "nn_opt_rd.cli.benchmark:main"
+nn-opt-experiment = "nn_opt_rd.cli.experiment:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
