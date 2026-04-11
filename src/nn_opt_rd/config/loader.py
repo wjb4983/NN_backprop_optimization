@@ -40,10 +40,24 @@ def _fallback_parse_yaml(text: str) -> dict:
         parent = stack[-1][1]
 
         if token.startswith("- "):
-            item = _cast_scalar(token[2:])
             if not isinstance(parent, list):
                 raise ValueError(f"Invalid list item placement: {raw}")
-            parent.append(item)
+            item_token = token[2:].strip()
+            if ":" in item_token:
+                key, value = [x.strip() for x in item_token.split(":", 1)]
+                item_dict: dict = {}
+                if value == "":
+                    item_dict[key] = {}
+                    parent.append(item_dict)
+                    stack.append((indent, item_dict))
+                    stack.append((indent + 1, item_dict[key]))
+                else:
+                    item_dict[key] = _cast_scalar(value)
+                    parent.append(item_dict)
+                    stack.append((indent, item_dict))
+            else:
+                item = _cast_scalar(item_token)
+                parent.append(item)
             continue
 
         if ":" not in token:

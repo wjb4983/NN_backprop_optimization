@@ -60,3 +60,28 @@ Safety constraints are always enforced:
 - Rollback is loss-based and short-horizon, which is robust/simple but can be noisy on highly stochastic tasks.
 
 See `docs/architecture.md` and `docs/roadmap.md` for details.
+
+
+## Experiment suites and reporting
+Use staged manifests for reproducible multi-seed comparisons:
+
+```bash
+nn-opt-experiment --manifest configs/experiments/starter_narrow.yaml --target-loss 0.02
+```
+
+Artifacts per run:
+- `metrics_step.jsonl`: per-step metrics (also mirrored to `metrics.jsonl` for compatibility)
+- `overhead.jsonl`: per-step wall-clock and controller overhead
+- `events.jsonl`: intervention events
+- `run_meta.json`: seed/config/git-hash metadata
+
+Report outputs (`report/summary.json`, `report/summary.md`) include:
+- multi-seed aggregates
+- time-to-target (if a target is set)
+- AULC-style area under learning curve
+- stability/failure rates
+
+Starter manifests:
+- `configs/experiments/starter_narrow.yaml`
+- `configs/experiments/medium.yaml`
+- `configs/experiments/later_scaffold.yaml`

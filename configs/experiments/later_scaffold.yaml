@@ -1,0 +1,19 @@
+suite_name: later_scaffold
+output_dir: runs/experiments/later_scaffold
+seeds:
+  - 1
+defaults:
+  steps: 120
+  batch_size: 32
+stages:
+  - name: future_task_slot
+    description: Placeholder for future richer tasks/models.
+    runs:
+      - name: adamw_baseline_placeholder
+        optimizer: adamw
+        learning_rate: 0.03
+        controller_enabled: false
+      - name: adamw_controller_placeholder
+        optimizer: adamw
+        learning_rate: 0.03
+        controller_enabled: true

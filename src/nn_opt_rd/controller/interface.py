@@ -113,6 +113,7 @@ class Controller:
 
         health, hints = self._infer_health(rolling_features)
         did_intervene = self._apply_action(state, health, hints)
+        event = "none"
 
         if did_intervene:
             state.intervention_steps.append(state.step)
@@ -132,6 +133,10 @@ class Controller:
             state.clip_threshold = _clamp(state.clip_threshold * (1.0 - steps.clip_step), bounds.min_clip_threshold, bounds.max_clip_threshold)
             state.mode = "rollback_backoff"
             state.rollback_guard_step = -1
+            event = "rollback_backoff"
+
+        if did_intervene and event == "none":
+            event = state.mode
 
         return {
             "controller_enabled": 1,
@@ -143,4 +148,6 @@ class Controller:
             "trust": state.trust,
             "momentum": state.momentum,
             "interventions": state.intervention_count,
+            "intervention_fired": 1 if did_intervene else 0,
+            "intervention_event": event,
         }

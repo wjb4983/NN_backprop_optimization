@@ -8,6 +8,8 @@
 - `harness/`: training loop and loss definitions.
 - `logging/`: metric sinks (jsonl + stdout).
 - `benchmark/`: batch evaluation across optimizer/lr combinations.
+- `benchmark/manifest.py`: staged suite definitions and ablation variant parsing.
+- `benchmark/reporting.py`: multi-seed aggregation, time-to-target, AULC, stability summaries.
 - `controller/`: bounded adaptive logic for v1.
 - `probe/`: placeholder hook for v2 state probes.
 - `diagnostics/`: rolling step diagnostics and feature extraction.
@@ -34,3 +36,10 @@
 - **Simple jsonl logging** as lowest-friction default while preserving compatibility with future richer sinks.
 - **Heuristic bounded controller** over learned policy for debuggability and deterministic guardrails.
 - **Cadence-based interventions** reduce overhead and policy chatter at the cost of delayed reactions.
+
+
+## Experiment/reporting design tradeoffs
+- **Wall-clock-normalized reporting first**: comparisons include `wall_clock_s` and `step_wall_ms` because equal step counts can hide runtime overhead differences.
+- **AULC uses logged step wall time**: simple trapezoidal integration of loss over elapsed time keeps implementation lightweight while preserving trajectory shape.
+- **JSONL + markdown/json reports**: machine-parseable by scripts and human-reviewable in PRs with minimal tooling.
+- **Manifest-driven ablations**: expressive enough for feature/action/bounds-cadence toggles without adding heavy orchestration layers.
